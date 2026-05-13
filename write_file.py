@@ -1,0 +1,1 @@
+open("include/value.hpp", "w").write(open("file_content.txt").read())

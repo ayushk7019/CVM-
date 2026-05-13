@@ -1,0 +1,7 @@
+// this is a comment
+let result = 10 + 20;
+if true {
+    print result;
+} else {
+    print false;
+}
