@@ -1,417 +1,546 @@
-# CVM++
+# CVM++ (Custom Virtual Machine)
 
-> A bytecode compiler and virtual machine implemented from scratch in modern C++20.
+> A complete stack-based programming language and bytecode virtual machine written in modern C++.
 
-CVM++ is a fully hand-written language runtime — no parser generators, no third-party VM frameworks. It takes source code written in a custom scripting language, compiles it to bytecode, and executes it on a register-stack virtual machine. The project demonstrates a complete compiler pipeline: lexing → parsing → AST construction → bytecode compilation → VM execution.
+CVM++ is an educational yet fully functional compiler toolchain that takes source code written in a custom language (`.cvm` files), converts it into bytecode, and executes it on a custom-built virtual machine.
+
+This project demonstrates the core concepts behind language design and implementation, including:
+
+- Lexical Analysis (Tokenizer / Scanner)
+- Parsing and Abstract Syntax Tree (AST) generation
+- Bytecode Compilation
+- Stack-Based Virtual Machine Execution
+- Disassembly and Debug Tracing
+- REPL (Read-Eval-Print Loop)
+- Variable Scoping and Control Flow
+
+---
+
+## Project Highlights
+
+- Built from scratch in C++17
+- Uses CMake for cross-platform builds
+- Supports both interactive REPL and script execution
+- Includes debugging tools:
+  - Token viewer
+  - AST printer
+  - Bytecode disassembler
+  - Execution trace
+- Implements global and local variables
+- Supports arithmetic, logical operations, and comparisons
+- Includes conditional statements and loops
+- Designed with clean modular architecture
 
 ---
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Pipeline](#pipeline)
-- [Features](#features)
-- [Project Structure](#project-structure)
-- [Components](#components)
-  - [Lexer](#lexer)
-  - [Parser](#parser)
-  - [AST](#ast)
-  - [Compiler](#compiler)
-  - [Virtual Machine](#virtual-machine)
-  - [Disassembler](#disassembler)
-- [Language Reference](#language-reference)
-- [Building](#building)
-- [Running the Compiler](#running-the-compiler)
-- [Running the VM](#running-the-vm)
-- [CLI Options](#cli-options)
-- [Dependencies](#dependencies)
+1. [Project Overview](#project-overview)
+2. [Language Features](#language-features)
+3. [Example Programs](#example-programs)
+4. [Architecture](#architecture)
+5. [Compilation Pipeline](#compilation-pipeline)
+6. [Project Structure](#project-structure)
+7. [Build Instructions](#build-instructions)
+8. [Running the Compiler](#running-the-compiler)
+9. [Running the VM](#running-the-vm)
+10. [Usage Guide](#usage-guide)
+11. [Debugging Modes](#debugging-modes)
+12. [Bytecode Instruction Set](#bytecode-instruction-set)
+13. [Internal Components](#internal-components)
+14. [Design Decisions](#design-decisions)
+15. [Future Improvements](#future-improvements)
+16. [Educational Value](#educational-value)
+17. [License](#license)
 
 ---
 
-## Overview
+## Project Overview
 
-CVM++ is a from-scratch implementation of a complete language runtime in C++20. It is designed to be readable, educational, and extensible. The codebase covers every stage of a modern language implementation:
+CVM++ is a mini programming language implementation inspired by language runtimes such as:
 
-- **Scanning** — tokenising raw source text
-- **Parsing** — constructing a typed Abstract Syntax Tree
-- **Compilation** — walking the AST and emitting bytecode instructions
-- **Execution** — running bytecode on a stack-based virtual machine
-- **Debugging** — disassembling bytecode chunks for inspection
+- Python
+- Lua
+- Java Virtual Machine (JVM)
+- CPython Bytecode Interpreter
+- The clox VM from the book *Crafting Interpreters* by Robert Nystrom
+
+The project allows users to write source code like:
+
+```swift
+let x = 10;
+
+if x > 5 {
+    let y = x * 2;
+    print y;
+} else {
+    print false;
+}
+```
+
+And execute it through the following stages:
+
+```
+Source Code
+    ↓
+  Lexer
+    ↓
+ Tokens
+    ↓
+ Parser
+    ↓
+   AST
+    ↓
+Compiler
+    ↓
+Bytecode Chunk
+    ↓
+Virtual Machine
+    ↓
+  Output
+```
+
+---
+
+## Language Features
+
+### Data Types
+
+CVM++ currently supports:
+
+- `Number` — floating-point values
+- `Boolean` — `true`, `false`
+- `Nil` — `nil`
+
+### Variables
+
+**Declaration**
+```swift
+let x = 42;
+```
+
+**Assignment**
+```swift
+x = x + 1;
+```
+
+**Scope**
+
+Variables respect block scope:
+
+```swift
+let x = 10;
+{
+    let x = 20;
+    print x;  // 20
+}
+print x;  // 10
+```
+
+### Arithmetic Operators
+
+| Operator | Meaning |
+|----------|---------|
+| `+` | Addition |
+| `-` | Subtraction |
+| `*` | Multiplication |
+| `/` | Division |
+| Unary `-` | Negation |
+
+### Comparison Operators
+
+| Operator | Meaning |
+|----------|---------|
+| `==` | Equal |
+| `!=` | Not Equal |
+| `<` | Less Than |
+| `<=` | Less Than or Equal |
+| `>` | Greater Than |
+| `>=` | Greater Than or Equal |
+
+### Logical Operators
+
+| Operator | Meaning |
+|----------|---------|
+| `!` | Logical NOT |
+
+### Input and Output
+
+**Print**
+```swift
+print x;
+```
+
+**Input**
+```swift
+let age = input;
+print age;
+```
+
+### Conditional Statements
+
+```swift
+if x > 10 {
+    print true;
+} else {
+    print false;
+}
+```
+
+### Loops
+
+The VM includes jump and loop opcodes, enabling iterative constructs:
+
+```swift
+while x < 10 {
+    x = x + 1;
+}
+```
+
+> **Note:** Exact syntax depends on parser support, but the opcode infrastructure (`OP_LOOP`, `OP_JUMP`) is fully implemented.
+
+---
+
+## Example Programs
+
+### 1. Basic Arithmetic
+
+```swift
+print 5 + 3 * 2;
+```
+
+Output:
+```
+11
+```
+
+### 2. Variables
+
+```swift
+let a = 10;
+let b = 20;
+print a + b;
+```
+
+Output:
+```
+30
+```
+
+### 3. Conditional Execution
+
+```swift
+let x = 4;
+if x > 5 {
+    print 100;
+} else {
+    print 0;
+}
+```
+
+Output:
+```
+0
+```
+
+### 4. User Input
+
+```swift
+print input;
+```
 
 ---
 
 ## Architecture
 
 ```
-Source Code (.cvm)
+┌─────────────┐
+│ Source Code │
+└──────┬──────┘
        │
        ▼
-  ┌─────────┐
-  │  Lexer  │  ── Scans characters → produces Token stream
-  └─────────┘
+┌─────────────┐
+│    Lexer    │
+└──────┬──────┘
+       │ Tokens
+       ▼
+┌─────────────┐
+│   Parser    │
+└──────┬──────┘
+       │ AST
+       ▼
+┌─────────────┐
+│  Compiler   │
+└──────┬──────┘
+       │ Bytecode
+       ▼
+┌─────────────┐
+│ Virtual VM  │
+└──────┬──────┘
        │
        ▼
-  ┌─────────┐
-  │ Parser  │  ── Consumes tokens → builds typed AST (StmtPtr / ExprPtr)
-  └─────────┘
-       │
-       ▼
-  ┌──────────────┐
-  │ AST Printer  │  ── (optional) pretty-prints the AST for debugging
-  └──────────────┘
-       │
-       ▼
-  ┌──────────────┐
-  │   Compiler   │  ── Walks AST via Visitor pattern → emits Chunk (bytecode)
-  └──────────────┘
-       │
-       ▼
-  ┌──────────────┐
-  │ Disassembler │  ── (optional) decodes bytecode instructions for inspection
-  └──────────────┘
-       │
-       ▼
-  ┌─────────────────────┐
-  │  Virtual Machine    │  ── Executes the Chunk on a value stack
-  └─────────────────────┘
+┌─────────────┐
+│   Output    │
+└─────────────┘
 ```
 
 ---
 
-## Pipeline
+## Compilation Pipeline
 
-1. **Source text** is read from a `.cvm` file (or typed interactively in REPL mode).
-2. The **Lexer** scans the text character-by-character, emitting a flat list of typed `Token` objects.
-3. The **Parser** consumes the token list using recursive descent and constructs a typed AST made of `Stmt` and `Expr` nodes.
-4. The **Compiler** traverses the AST via the Visitor pattern, resolving variable scopes and emitting bytecode into a `Chunk`.
-5. The **VM** fetches, decodes, and dispatches each `OpCode` in the chunk, maintaining a value stack and a global/local variable store.
-6. Optionally, the **Disassembler** can decode and print each instruction for debugging.
+### 1. Lexer (`lexer.cpp`)
+
+Converts raw source code into tokens.
+
+**Example** — `let x = 10;` produces:
+```
+LET  IDENTIFIER  EQUAL  NUMBER  SEMICOLON  EOF
+```
+
+**Responsibilities:**
+- Character scanning
+- Number parsing
+- Keyword recognition
+- Error reporting with line and column numbers
 
 ---
 
-## Features
+### 2. Parser (`parser.cpp`)
 
-- **Hand-written recursive descent parser** — no tools like Bison or ANTLR
-- **Typed AST** with full visitor pattern dispatch
-- **Lexical scoping** with compile-time local variable slot resolution
-- **Bytecode compilation** into a compact `Chunk` format
-- **Stack-based VM** with a clean fetch-decode-execute loop
-- **Short-circuit evaluation** for `and` / `or`
-- **Control flow** — `if/else`, `while` loops with correct jump patching
-- **Two-pass jump resolution** — forward jumps are emitted with placeholders and back-patched
-- **First-class value types** — numbers (double), booleans, nil, strings via `std::variant`
-- **Global and local variables** resolved at compile time (locals) and runtime (globals)
-- **REPL** — interactive read-eval-print loop
-- **Disassembler** for bytecode inspection
-- **AST printer** for parse tree debugging
-- **CLI flags** for toggling each pipeline stage
+Uses recursive descent parsing to transform tokens into an Abstract Syntax Tree.
+
+**Handles:**
+- Expressions
+- Variable declarations
+- Assignments
+- Print statements
+- If/else blocks
+- Block scopes
+
+---
+
+### 3. AST (`ast.hpp`)
+
+Represents the syntactic structure of programs.
+
+**Expression nodes:**
+- `LiteralExpr`
+- `UnaryExpr`
+- `BinaryExpr`
+- `VariableExpr`
+- `AssignExpr`
+
+**Statement nodes:**
+- `ExpressionStmt`
+- `PrintStmt`
+- `VarStmt`
+- `BlockStmt`
+- `IfStmt`
+
+---
+
+### 4. Compiler (`compiler.cpp`)
+
+Traverses the AST and emits bytecode instructions.
+
+**Responsibilities:**
+- Constant pool management
+- Scope tracking
+- Symbol resolution
+- Jump patching
+- Emitting opcodes and operands
+
+---
+
+### 5. Bytecode Chunk (`chunk.hpp`)
+
+Stores:
+- Instruction bytes
+- Constant values
+- Source line information
+
+---
+
+### 6. Virtual Machine (`vm.cpp`)
+
+Executes bytecode using:
+- Operand stack
+- Global variable table
+- Instruction pointer
+
+---
+
+### 7. Disassembler (`disassembler.cpp`)
+
+Converts bytecode into human-readable instructions. Useful for debugging and understanding generated machine code.
 
 ---
 
 ## Project Structure
 
 ```
-cvm_new/
-├── include/                  # Public headers
-│   ├── token.hpp             # Token types and Token struct
-│   ├── lexer.hpp             # Lexer interface
-│   ├── ast.hpp               # AST node definitions (Stmt + Expr)
-│   ├── ast_printer.hpp       # AST pretty-printer
-│   ├── compiler.hpp          # Compiler interface and Local struct
-│   ├── vm.hpp                # Virtual machine interface
-│   └── disassembler.hpp      # Bytecode disassembler interface
+CVM/
+├── CMakeLists.txt
+├── include/
+│   ├── ast.hpp
+│   ├── ast_printer.hpp
+│   ├── chunk.hpp
+│   ├── compiler.hpp
+│   ├── disassembler.hpp
+│   ├── lexer.hpp
+│   ├── opcode.hpp
+│   ├── parser.hpp
+│   ├── token.hpp
+│   ├── value.hpp
+│   └── vm.hpp
 │
-├── src/                      # Implementation files
-│   ├── main.cpp              # Entry point, CLI parsing, REPL
-│   ├── lexer.cpp             # Lexer implementation
-│   ├── parser.cpp            # Recursive descent parser
-│   ├── ast_printer.cpp       # AST visitor printer
-│   ├── compiler.cpp          # Bytecode compiler (Visitor over AST)
-│   ├── vm.cpp                # VM fetch-decode-execute loop
-│   └── disassembler.cpp      # Instruction decoder
+├── src/
+│   ├── ast_printer.cpp
+│   ├── compiler.cpp
+│   ├── disassembler.cpp
+│   ├── lexer.cpp
+│   ├── main.cpp
+│   ├── parser.cpp
+│   └── vm.cpp
 │
-├── build/                    # CMake build output (generated)
-├── test.cvm                  # Sample source files
-├── CMakeLists.txt            # Build configuration
+├── test.cvm
+├── test2.cvm
+├── test3.cvm
+├── test4.cvm
 └── README.md
 ```
 
 ---
 
-## Components
-
-### Lexer
-
-**Files:** `include/lexer.hpp`, `src/lexer.cpp`
-
-The lexer performs a single linear pass over the source string. It recognises:
-
-- **Literals** — integer/float numbers, double-quoted strings, `true`, `false`, `nil`
-- **Identifiers** and **reserved keywords** — `if`, `else`, `while`, `var`, `print`, `input`, `and`, `or`, `not`
-- **Operators** — `+`, `-`, `*`, `/`, `==`, `!=`, `<`, `<=`, `>`, `>=`, `=`, `!`
-- **Delimiters** — `(`, `)`, `{`, `}`, `;`
-- **Whitespace and comments** — skipped silently
-
-Each token carries its `type`, `lexeme` (raw source text), and `line` number for error reporting.
-
----
-
-### Parser
-
-**Files:** `src/parser.cpp`
-
-A hand-written **recursive descent parser** that consumes the token stream and produces a typed AST. Each grammar rule maps directly to a C++ method. The parser handles:
-
-- Variable declarations (`var x = expr;`)
-- Assignment expressions
-- Binary and unary operators with correct precedence
-- Logical operators with short-circuit semantics
-- `if/else` statements
-- `while` loops
-- Block statements with `{}`
-- `print` statements
-- `input` statements
-- Grouping with parentheses
-- All literal types — numbers, strings, booleans, nil
-
----
-
-### AST
-
-**Files:** `include/ast.hpp`
-
-The AST uses a **Visitor pattern** with two node hierarchies:
-
-- `Stmt` — statement nodes: `VarDecl`, `BlockStmt`, `IfStmt`, `WhileStmt`, `PrintStmt`, `InputStmt`, `ExprStmt`
-- `Expr` — expression nodes: `NumberLiteral`, `StringLiteral`, `BoolLiteral`, `NilLiteral`, `Variable`, `Assign`, `BinaryExpr`, `UnaryExpr`, `GroupingExpr`
-
-Nodes are heap-allocated and stored as `unique_ptr` (`StmtPtr`, `ExprPtr`) for safe ownership.
-
----
-
-### Compiler
-
-**Files:** `include/compiler.hpp`, `src/compiler.cpp`
-
-The compiler walks the AST using the Visitor pattern and emits bytecode into a `Chunk`. Key responsibilities:
-
-- **Scope tracking** — `beginScope()` / `endScope()` manage a `m_locals` stack; local variables are resolved to numeric stack slots at compile time, eliminating name lookups at runtime.
-- **Constant folding** — literals are added to the chunk's constant table and loaded with `OP_CONSTANT`.
-- **Jump patching** — forward jumps (`OP_JUMP`, `OP_JUMP_IF_FALSE`) are emitted with `0xFFFF` placeholder offsets and back-patched once the target address is known.
-- **Loop emission** — `emitLoop()` calculates and emits a backward jump offset for `while` loops.
-- **Short-circuit logic** — `and`/`or` use conditional jumps rather than computing both sides unconditionally.
-
----
-
-### Virtual Machine
-
-**Files:** `include/vm.hpp`, `src/vm.cpp`
-
-A **stack-based bytecode interpreter** with a clean fetch-decode-execute loop. The VM maintains:
-
-- A **value stack** for operands and intermediate results
-- A **globals map** (`string → Value`) for global variables
-- A **locals array** using stack slots (indexed directly, O(1) access)
-
-Value types are represented with `std::variant<std::monostate, double, bool, std::string>`, avoiding heap allocation for primitives.
-
-**Supported opcodes include:**
-
-| Opcode | Description |
-|---|---|
-| `OP_CONSTANT` | Push a constant from the table |
-| `OP_TRUE / OP_FALSE / OP_NIL` | Push literal values |
-| `OP_ADD / OP_SUB / OP_MUL / OP_DIV` | Arithmetic |
-| `OP_EQUAL / OP_NOT_EQUAL` | Equality |
-| `OP_LESS / OP_LESS_EQUAL / OP_GREATER / OP_GREATER_EQUAL` | Comparison |
-| `OP_NEGATE / OP_NOT` | Unary operators |
-| `OP_PRINT` | Pop and print top of stack |
-| `OP_INPUT` | Read line from stdin, push as string |
-| `OP_POP` | Discard top of stack |
-| `OP_DEFINE_GLOBAL / OP_GET_GLOBAL / OP_SET_GLOBAL` | Global variable access |
-| `OP_GET_LOCAL / OP_SET_LOCAL` | Local variable access by slot |
-| `OP_JUMP / OP_JUMP_IF_FALSE` | Conditional and unconditional forward jumps |
-| `OP_LOOP` | Unconditional backward jump |
-| `OP_RETURN` | End execution |
-
----
-
-### Disassembler
-
-**Files:** `include/disassembler.hpp`, `src/disassembler.cpp`
-
-Decodes a compiled `Chunk` and prints a human-readable listing of every instruction, its byte offset, line number, and operands. Used with the `--disasm` flag.
-
----
-
-## Language Reference
-
-```swift
-// Variable declaration
-var x = 10;
-var name = "Alice";
-var flag = true;
-
-// Arithmetic
-var result = (x + 5) * 2 / 3;
-
-// String concatenation
-var greeting = "Hello, " + name;
-
-// Print
-print result;
-print greeting;
-
-// Input
-input name;
-
-// If / else
-if (x > 5) {
-    print "big";
-} else {
-    print "small";
-}
-
-// While loop
-var i = 0;
-while (i < 5) {
-    print i;
-    i = i + 1;
-}
-
-// Logical operators (short-circuit)
-if (x > 0 and flag) {
-    print "both true";
-}
-
-// Blocks and lexical scoping
-{
-    var inner = 42;
-    print inner;
-}
-// inner is out of scope here
-```
-
----
-
-## Building
+## Build Instructions
 
 ### Prerequisites
 
-| Tool | Minimum Version |
-|---|---|
-| g++ / MinGW | 10+ (C++20 support required; g++ 15 recommended) |
-| CMake | 3.20+ |
-| make / mingw32-make | any recent version |
+| Tool | Requirement |
+|------|-------------|
+| C++17 compiler (GCC 9+, Clang 10+, MSVC 2019+) | C++17 support required |
+| CMake | 3.10+ |
 
-### Steps
+### Clone Repository
 
-```powershell
-# From the repository root
-mkdir build
-cd build
-cmake .. -G "MinGW Makefiles"
-mingw32-make
+```bash
+git clone <repository-url>
+cd CVM
 ```
 
-The executable `cvm.exe` will be produced in the `build/` directory.
+### Build
 
-> **Note:** Ensure your g++ is version 10 or higher for C++20 support. On Windows, install a modern g++ via [MSYS2](https://www.msys2.org):
-> ```bash
-> pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-make
-> ```
+```bash
+mkdir build
+cd build
+cmake ..
+cmake --build .
+```
+
+This produces an executable:
+- **Windows:** `cvm.exe`
+- **Linux/macOS:** `cvm`
 
 ---
 
 ## Running the Compiler
 
-The compiler is invoked automatically whenever you pass a `.cvm` source file to `cvm.exe`. Internally, it runs the full pipeline: Lexer → Parser → Compiler, producing a `Chunk` of bytecode that is immediately handed off to the VM for execution.
+The compiler is invoked automatically when you pass a `.cvm` source file to the executable. Internally it runs the full front-end pipeline — Lexer → Parser → Compiler — producing a `Chunk` of bytecode that is handed to the VM for execution.
 
 ### Compile and run a source file
 
+**Linux / macOS**
+```bash
+./cvm test.cvm
+```
+
+**Windows**
 ```powershell
-.\cvm.exe ..\test.cvm
+.\cvm.exe test.cvm
 ```
 
-### Inspect intermediate compiler outputs
+### Inspect each compiler stage
 
-Each flag below halts the pipeline at a specific stage, so you can see exactly what the compiler is producing without running the VM.
+Use the flags below to halt the pipeline at a specific stage and print what the compiler produced, without running the VM.
 
-**1. View the token stream (after lexing)**
+**Step 1 — View the token stream (after lexing)**
 
-```powershell
-.\cvm.exe --tokens ..\test.cvm
+```bash
+./cvm --tokens test.cvm
 ```
 
-Example output for `var x = 10;`:
-
+Example — for `let x = 10;`:
 ```
-[1] VAR 'var'
+[1] LET        'let'
 [1] IDENTIFIER 'x'
-[1] EQUAL '='
-[1] NUMBER '10'
-[1] SEMICOLON ';'
-[1] EOF ''
+[1] EQUAL      '='
+[1] NUMBER     '10'
+[1] SEMICOLON  ';'
+[1] EOF        ''
 ```
 
-**2. View the Abstract Syntax Tree (after parsing)**
+**Step 2 — View the Abstract Syntax Tree (after parsing)**
 
-```powershell
-.\cvm.exe --ast ..\test.cvm
+```bash
+./cvm --ast test.cvm
 ```
 
-Example output for `var x = 10;`:
-
+Example — for `let x = 10;`:
 ```
 VarDecl(x)
-  NumberLiteral(10)
+  LiteralExpr(10)
 ```
 
-**3. View the disassembled bytecode (after compilation)**
+**Step 3 — View the disassembled bytecode (after compilation)**
 
-```powershell
-.\cvm.exe --disasm ..\test.cvm
+```bash
+./cvm --disasm test.cvm
 ```
 
-Example output for `var x = 10;`:
-
+Example — for `let x = 10;`:
 ```
 == <script> ==
-0000  1 OP_CONSTANT         0 '10'
-0002  | OP_DEFINE_GLOBAL    1 'x'
+0000  1 OP_CONSTANT       0 '10'
+0002  | OP_DEFINE_GLOBAL  1 'x'
 0004  | OP_RETURN
 ```
 
-Each line shows: byte offset, source line, opcode name, operand index, and the resolved value or name.
+Each line shows: byte offset · source line · opcode name · operand index · resolved value or name.
+
+This is the **compiled output** — the sequence of bytecode instructions that will be handed to the VM for execution.
 
 ---
 
 ## Running the VM
 
-The VM executes the bytecode `Chunk` produced by the compiler. Under normal operation it runs silently — you only see output produced by `print` statements in your source. For debugging, the `--trace` flag enables per-instruction tracing.
+The VM executes the bytecode `Chunk` produced by the compiler. Under normal operation it runs silently — you only see output from `print` statements in your source. Use `--trace` to make the VM's internal state visible at every instruction cycle.
 
-### Execute a source file
+### Execute a source file (normal run)
 
-```powershell
-.\cvm.exe ..\test.cvm
+**Linux / macOS**
+```bash
+./cvm test.cvm
 ```
 
-### Run with VM instruction tracing
-
-`--trace` prints the current instruction and a full dump of the value stack before each dispatch step. This lets you follow the exact state of the VM at every cycle.
-
+**Windows**
 ```powershell
-.\cvm.exe --trace ..\test.cvm
+.\cvm.exe test.cvm
 ```
 
-Example trace output for `print 1 + 2;`:
+### Run with VM execution tracing
 
+`--trace` prints the current instruction and a full dump of the value stack before each dispatch step, letting you follow the exact state of the VM cycle by cycle.
+
+```bash
+./cvm --trace test.cvm
+```
+
+Example — for `print 1 + 2;`:
 ```
           [ ]
-0000 OP_CONSTANT         0 '1'
+0000 OP_CONSTANT       0 '1'
           [ 1 ]
-0002 OP_CONSTANT         1 '2'
+0002 OP_CONSTANT       1 '2'
           [ 1 ][ 2 ]
 0004 OP_ADD
           [ 3 ]
@@ -421,72 +550,315 @@ Example trace output for `print 1 + 2;`:
 0006 OP_RETURN
 ```
 
-Each stack slot is shown in `[ ]` brackets. The printed value appears inline when `OP_PRINT` fires.
+Each stack slot is shown in `[ ]` brackets. The result of `OP_PRINT` appears inline when it fires.
 
-### Start the interactive REPL
+### Recommended demo sequence
 
-Running `cvm.exe` with no arguments launches the REPL. Each line you enter is independently lexed, compiled, and executed by the VM:
+Run these four commands in order to show the full pipeline — from source text to final output:
 
-```powershell
-.\cvm.exe
+```bash
+# 1. Show the token stream produced by the lexer
+./cvm --tokens test.cvm
+
+# 2. Show the AST produced by the parser
+./cvm --ast test.cvm
+
+# 3. Show the bytecode produced by the compiler  ← the "compiled" output
+./cvm --disasm test.cvm
+
+# 4. Execute on the VM with full instruction tracing
+./cvm --trace test.cvm
+
+# 5. Clean final run — just the program output
+./cvm test.cvm
 ```
 
+---
+
+## Usage Guide
+
+### Run a Script
+
+```bash
+./cvm test.cvm
 ```
-cvm> var x = 5;
+
+### Start REPL
+
+```bash
+./cvm
+```
+
+Example session:
+
+```
+CVM++ REPL v0.1 (type :exit to quit)
+cvm> print 2 + 3;
+5
+cvm> let x = 10;
 cvm> print x * 2;
-10
-cvm> print "hello " + "world";
-hello world
-cvm>
+20
+cvm> :exit
 ```
 
-> **Note:** The REPL treats each line as a self-contained program. Variables declared on one line persist for the duration of the session since they are stored in the VM's globals map.
+> **Note:** Variables declared in the REPL persist for the duration of the session because they are stored in the VM's globals map.
 
 ---
 
-## CLI Options
+## Debugging Modes
 
-| Flag | Description |
-|---|---|
-| *(no flag)* | Compile and execute the source file |
-| `--tokens` | Lex the source and print all tokens, then exit |
-| `--ast` | Parse the source and print the AST, then exit |
-| `--disasm` | Compile and print the disassembled bytecode, then exit |
-| `--trace` | Execute with per-instruction VM tracing (stack dump at each step) |
+### View Tokens
 
-### Examples
-
-```powershell
-# Print the token stream
-.\cvm.exe --tokens ..\test.cvm
-
-# Print the AST
-.\cvm.exe --ast ..\test.cvm
-
-# Disassemble the compiled bytecode
-.\cvm.exe --disasm ..\test.cvm
-
-# Run with VM instruction tracing
-.\cvm.exe --trace ..\test.cvm
+```bash
+./cvm --tokens test.cvm
 ```
 
+Displays all tokens with their type, lexeme, and line number.
+
+### View AST
+
+```bash
+./cvm --ast test.cvm
+```
+
+Prints the full parsed Abstract Syntax Tree.
+
+### View Bytecode Disassembly
+
+```bash
+./cvm --disasm test.cvm
+```
+
+Shows all generated bytecode instructions with byte offsets and operand values.
+
+### Trace Execution
+
+```bash
+./cvm --trace test.cvm
+```
+
+Prints the value stack and the currently executing instruction before every dispatch step.
+
 ---
 
-## Dependencies
+## Bytecode Instruction Set
 
-CVM++ has **no external dependencies**. It uses only the C++20 standard library:
+### Literals and Constants
 
-- `<variant>` — tagged union value type
-- `<vector>`, `<string>`, `<unordered_map>` — standard containers
-- `<fstream>`, `<sstream>` — file and string I/O
-- `<iostream>` — console I/O
-- `<memory>` — `unique_ptr` for AST node ownership
+| Opcode | Description |
+|--------|-------------|
+| `OP_CONSTANT` | Push a constant value onto the stack |
+| `OP_TRUE` | Push boolean `true` |
+| `OP_FALSE` | Push boolean `false` |
+| `OP_NIL` | Push `nil` |
+
+### Stack Operations
+
+| Opcode | Description |
+|--------|-------------|
+| `OP_POP` | Discard the top of the stack |
+
+### Arithmetic
+
+| Opcode | Description |
+|--------|-------------|
+| `OP_ADD` | Addition |
+| `OP_SUB` | Subtraction |
+| `OP_MUL` | Multiplication |
+| `OP_DIV` | Division |
+| `OP_NEGATE` | Unary negation |
+
+### Comparison
+
+| Opcode | Description |
+|--------|-------------|
+| `OP_EQUAL` | Equality check |
+| `OP_NOT_EQUAL` | Inequality check |
+| `OP_LESS` | Less than |
+| `OP_LESS_EQUAL` | Less than or equal |
+| `OP_GREATER` | Greater than |
+| `OP_GREATER_EQUAL` | Greater than or equal |
+
+### Logical
+
+| Opcode | Description |
+|--------|-------------|
+| `OP_NOT` | Logical NOT |
+
+### Variables
+
+| Opcode | Description |
+|--------|-------------|
+| `OP_DEFINE_GLOBAL` | Define a global variable |
+| `OP_GET_GLOBAL` | Read a global variable |
+| `OP_SET_GLOBAL` | Write a global variable |
+| `OP_GET_LOCAL` | Read a local variable by stack slot |
+| `OP_SET_LOCAL` | Write a local variable by stack slot |
+
+### Control Flow
+
+| Opcode | Description |
+|--------|-------------|
+| `OP_JUMP` | Unconditional forward jump |
+| `OP_JUMP_IF_FALSE` | Conditional forward jump |
+| `OP_LOOP` | Unconditional backward jump |
+
+### Input / Output
+
+| Opcode | Description |
+|--------|-------------|
+| `OP_PRINT` | Pop and print top of stack |
+| `OP_INPUT` | Read a line from stdin, push as value |
+
+### Program Termination
+
+| Opcode | Description |
+|--------|-------------|
+| `OP_RETURN` | End execution |
 
 ---
 
-## Implementation Notes
+## Internal Components
 
-- **Local variable resolution is entirely at compile time.** The compiler assigns each local a stack slot index; the VM accesses locals by index with no name lookup at runtime.
-- **Forward jump offsets use 16-bit placeholders** (`0xFFFF`) emitted at compile time and back-patched once the target offset is known — the standard technique used in production bytecode compilers.
-- **`std::variant` avoids boxing.** Primitive values (numbers, booleans, nil) live directly in the variant without heap allocation.
-- **The visitor pattern** cleanly separates the AST structure from the operations performed on it, making it straightforward to add new pipeline stages (e.g. a type checker or optimizer) without modifying the AST nodes.
+### Value
+
+Represents dynamically typed runtime values. Supports:
+- Numbers
+- Booleans
+- Nil
+
+### Token
+
+Contains:
+- Token type
+- Lexeme
+- Literal value
+- Line and column information
+
+### Chunk
+
+Stores:
+- Bytecode array
+- Constant pool
+- Line metadata
+
+### VM
+
+Maintains:
+- Operand stack
+- Globals map
+- Instruction pointer
+
+---
+
+## Design Decisions
+
+### Stack-Based VM
+
+A stack machine simplifies code generation. For example:
+
+```
+2 + 3 * 4
+```
+
+Compiles conceptually to:
+
+```
+PUSH 2
+PUSH 3
+PUSH 4
+MUL
+ADD
+```
+
+### Recursive Descent Parsing
+
+Chosen because it is:
+- Easy to implement
+- Highly readable
+- Simple to extend
+- Ideal for expression grammars
+
+### Bytecode Interpretation
+
+Separates front-end and runtime concerns.
+
+**Benefits:**
+- Faster than directly walking the AST
+- Easier debugging and optimization
+- Closer to production language runtimes
+
+---
+
+## Future Improvements
+
+Potential enhancements include:
+
+- Functions and return values
+- Closures
+- Strings
+- Arrays and dictionaries
+- Classes and objects
+- Garbage collection
+- Modules and imports
+- Native standard library functions
+- JIT compilation
+- Optimizations such as constant folding
+
+---
+
+## Educational Value
+
+This project is highly valuable for understanding:
+
+- Compiler design
+- Programming language implementation
+- Virtual machines
+- Parsing techniques
+- Memory and stack management
+- Symbol tables and scoping
+- Debugging infrastructure
+
+It is suitable for:
+- Systems programming portfolios
+- Compiler and interpreter coursework
+- Interview discussions
+- Teaching language internals
+
+### Sample Resume Description
+
+> **Custom Programming Language and Virtual Machine (C++17)**
+> Designed and implemented a complete stack-based programming language from scratch in C++17, featuring lexical analysis, recursive descent parsing, AST generation, bytecode compilation, and a custom virtual machine with REPL, disassembler, and execution tracing.
+
+### Performance Characteristics
+
+| Stage | Time Complexity |
+|-------|----------------|
+| Lexing | O(n) |
+| Parsing | O(n) |
+| Compilation | O(n) |
+| Execution | O(number of bytecode instructions) |
+
+*Where n is the length of the source code.*
+
+### Why This Project Stands Out
+
+Unlike small toy interpreters, CVM++ includes the complete language toolchain:
+
+- **Frontend** — Lexer + Parser
+- **Intermediate Representation** — AST
+- **Backend** — Compiler
+- **Runtime** — VM
+- **Developer Tooling** — REPL, AST Printer, Disassembler, Trace Mode
+
+This demonstrates strong understanding of:
+- Low-level programming
+- Software architecture
+- Compiler theory
+- Runtime systems
+
+---
+
+## License
+
+See `LICENSE` for details.
