@@ -22,7 +22,8 @@ CVM++ is a fully hand-written language runtime — no parser generators, no thir
   - [Disassembler](#disassembler)
 - [Language Reference](#language-reference)
 - [Building](#building)
-- [Running](#running)
+- [Running the Compiler](#running-the-compiler)
+- [Running the VM](#running-the-vm)
 - [CLI Options](#cli-options)
 - [Dependencies](#dependencies)
 
@@ -323,7 +324,72 @@ The executable `cvm.exe` will be produced in the `build/` directory.
 
 ---
 
-## Running
+## Running the Compiler
+
+The compiler is invoked automatically whenever you pass a `.cvm` source file to `cvm.exe`. Internally, it runs the full pipeline: Lexer → Parser → Compiler, producing a `Chunk` of bytecode that is immediately handed off to the VM for execution.
+
+### Compile and run a source file
+
+```powershell
+.\cvm.exe ..\test.cvm
+```
+
+### Inspect intermediate compiler outputs
+
+Each flag below halts the pipeline at a specific stage, so you can see exactly what the compiler is producing without running the VM.
+
+**1. View the token stream (after lexing)**
+
+```powershell
+.\cvm.exe --tokens ..\test.cvm
+```
+
+Example output for `var x = 10;`:
+
+```
+[1] VAR 'var'
+[1] IDENTIFIER 'x'
+[1] EQUAL '='
+[1] NUMBER '10'
+[1] SEMICOLON ';'
+[1] EOF ''
+```
+
+**2. View the Abstract Syntax Tree (after parsing)**
+
+```powershell
+.\cvm.exe --ast ..\test.cvm
+```
+
+Example output for `var x = 10;`:
+
+```
+VarDecl(x)
+  NumberLiteral(10)
+```
+
+**3. View the disassembled bytecode (after compilation)**
+
+```powershell
+.\cvm.exe --disasm ..\test.cvm
+```
+
+Example output for `var x = 10;`:
+
+```
+== <script> ==
+0000  1 OP_CONSTANT         0 '10'
+0002  | OP_DEFINE_GLOBAL    1 'x'
+0004  | OP_RETURN
+```
+
+Each line shows: byte offset, source line, opcode name, operand index, and the resolved value or name.
+
+---
+
+## Running the VM
+
+The VM executes the bytecode `Chunk` produced by the compiler. Under normal operation it runs silently — you only see output produced by `print` statements in your source. For debugging, the `--trace` flag enables per-instruction tracing.
 
 ### Execute a source file
 
@@ -331,13 +397,50 @@ The executable `cvm.exe` will be produced in the `build/` directory.
 .\cvm.exe ..\test.cvm
 ```
 
+### Run with VM instruction tracing
+
+`--trace` prints the current instruction and a full dump of the value stack before each dispatch step. This lets you follow the exact state of the VM at every cycle.
+
+```powershell
+.\cvm.exe --trace ..\test.cvm
+```
+
+Example trace output for `print 1 + 2;`:
+
+```
+          [ ]
+0000 OP_CONSTANT         0 '1'
+          [ 1 ]
+0002 OP_CONSTANT         1 '2'
+          [ 1 ][ 2 ]
+0004 OP_ADD
+          [ 3 ]
+0005 OP_PRINT
+3
+          [ ]
+0006 OP_RETURN
+```
+
+Each stack slot is shown in `[ ]` brackets. The printed value appears inline when `OP_PRINT` fires.
+
 ### Start the interactive REPL
+
+Running `cvm.exe` with no arguments launches the REPL. Each line you enter is independently lexed, compiled, and executed by the VM:
 
 ```powershell
 .\cvm.exe
 ```
 
-Type expressions or statements and press Enter to evaluate them immediately.
+```
+cvm> var x = 5;
+cvm> print x * 2;
+10
+cvm> print "hello " + "world";
+hello world
+cvm>
+```
+
+> **Note:** The REPL treats each line as a self-contained program. Variables declared on one line persist for the duration of the session since they are stored in the VM's globals map.
 
 ---
 
