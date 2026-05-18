@@ -4,6 +4,15 @@
 
 CVM++ is an educational yet fully functional compiler toolchain that takes source code written in a custom language (`.cvm` files), converts it into bytecode, and executes it on a custom-built virtual machine.
 
+---
+
+## 🔗 Quick Links & Demos
+
+- 🎬 **Demo Video:** [Watch the Full Compiler & VM Trace Pipeline in Action](https://drive.google.com/file/d/19MzQ9OTiXQt9k7xAWxA2MIF4-BUnmIQW/view?usp=drivesdk)
+- 🌐 **Live Web Demo:** [Interactive Online Compiler & Playpen](https://6a0b04c4ddba698d4ad170e0--tranquil-sawine-7418fe.netlify.app/)
+
+---
+
 This project demonstrates the core concepts behind language design and implementation, including:
 
 - Lexical Analysis (Tokenizer / Scanner)
@@ -16,11 +25,11 @@ This project demonstrates the core concepts behind language design and implement
 
 ---
 
-## Project Highlights
+## ✨ Project Highlights
 
-- Built from scratch in C++17
-- Uses CMake for cross-platform builds
-- Supports both interactive REPL and script execution
+- Built from scratch in **C++17**
+- Uses **CMake** for cross-platform builds
+- Supports both **interactive REPL** and **script execution**
 - Includes debugging tools:
   - Token viewer
   - AST printer
@@ -33,7 +42,7 @@ This project demonstrates the core concepts behind language design and implement
 
 ---
 
-## Table of Contents
+## 📚 Table of Contents
 
 1. [Project Overview](#project-overview)
 2. [Language Features](#language-features)
@@ -108,9 +117,11 @@ Virtual Machine
 
 CVM++ currently supports:
 
-- `Number` — floating-point values
-- `Boolean` — `true`, `false`
-- `Nil` — `nil`
+| Type | Description |
+|------|-------------|
+| `Number` | Floating-point values |
+| `Boolean` | `true`, `false` |
+| `Nil` | `nil` |
 
 ### Variables
 
@@ -124,10 +135,7 @@ let x = 42;
 x = x + 1;
 ```
 
-**Scope**
-
-Variables respect block scope:
-
+**Scope** — Variables respect block scope:
 ```swift
 let x = 10;
 {
@@ -209,7 +217,7 @@ while x < 10 {
 print 5 + 3 * 2;
 ```
 
-Output:
+**Output:**
 ```
 11
 ```
@@ -222,7 +230,7 @@ let b = 20;
 print a + b;
 ```
 
-Output:
+**Output:**
 ```
 30
 ```
@@ -238,7 +246,7 @@ if x > 5 {
 }
 ```
 
-Output:
+**Output:**
 ```
 0
 ```
@@ -293,6 +301,7 @@ print input;
 Converts raw source code into tokens.
 
 **Example** — `let x = 10;` produces:
+
 ```
 LET  IDENTIFIER  EQUAL  NUMBER  SEMICOLON  EOF
 ```
@@ -302,8 +311,6 @@ LET  IDENTIFIER  EQUAL  NUMBER  SEMICOLON  EOF
 - Number parsing
 - Keyword recognition
 - Error reporting with line and column numbers
-
----
 
 ### 2. Parser (`parser.cpp`)
 
@@ -316,8 +323,6 @@ Uses recursive descent parsing to transform tokens into an Abstract Syntax Tree.
 - Print statements
 - If/else blocks
 - Block scopes
-
----
 
 ### 3. AST (`ast.hpp`)
 
@@ -337,8 +342,6 @@ Represents the syntactic structure of programs.
 - `BlockStmt`
 - `IfStmt`
 
----
-
 ### 4. Compiler (`compiler.cpp`)
 
 Traverses the AST and emits bytecode instructions.
@@ -350,8 +353,6 @@ Traverses the AST and emits bytecode instructions.
 - Jump patching
 - Emitting opcodes and operands
 
----
-
 ### 5. Bytecode Chunk (`chunk.hpp`)
 
 Stores:
@@ -359,16 +360,12 @@ Stores:
 - Constant values
 - Source line information
 
----
-
 ### 6. Virtual Machine (`vm.cpp`)
 
 Executes bytecode using:
 - Operand stack
 - Global variable table
 - Instruction pointer
-
----
 
 ### 7. Disassembler (`disassembler.cpp`)
 
@@ -445,7 +442,7 @@ This produces an executable:
 
 ## Running the Compiler
 
-The compiler is invoked automatically when you pass a `.cvm` source file to the executable. Internally it runs the full front-end pipeline — Lexer → Parser → Compiler — producing a `Chunk` of bytecode that is handed to the VM for execution.
+The compiler is invoked automatically when you pass a `.cvm` source file to the executable. Internally it runs the full front-end pipeline — **Lexer → Parser → Compiler** — producing a `Chunk` of bytecode that is handed to the VM for execution.
 
 ### Compile and run a source file
 
@@ -464,7 +461,6 @@ The compiler is invoked automatically when you pass a `.cvm` source file to the 
 Use the flags below to halt the pipeline at a specific stage and print what the compiler produced, without running the VM.
 
 **Step 1 — View the token stream (after lexing)**
-
 ```bash
 ./cvm --tokens test.cvm
 ```
@@ -480,7 +476,6 @@ Example — for `let x = 10;`:
 ```
 
 **Step 2 — View the Abstract Syntax Tree (after parsing)**
-
 ```bash
 ./cvm --ast test.cvm
 ```
@@ -492,7 +487,6 @@ VarDecl(x)
 ```
 
 **Step 3 — View the disassembled bytecode (after compilation)**
-
 ```bash
 ./cvm --disasm test.cvm
 ```
@@ -505,9 +499,9 @@ Example — for `let x = 10;`:
 0004  | OP_RETURN
 ```
 
-Each line shows: byte offset · source line · opcode name · operand index · resolved value or name.
+Each line shows: `byte offset · source line · opcode name · operand index · resolved value or name`.
 
-This is the **compiled output** — the sequence of bytecode instructions that will be handed to the VM for execution.
+> This is the compiled output — the sequence of bytecode instructions that will be handed to the VM for execution.
 
 ---
 
@@ -590,7 +584,6 @@ Run these four commands in order to show the full pipeline — from source text 
 ```
 
 Example session:
-
 ```
 CVM++ REPL v0.1 (type :exit to quit)
 cvm> print 2 + 3;
@@ -601,7 +594,7 @@ cvm> print x * 2;
 cvm> :exit
 ```
 
-> **Note:** Variables declared in the REPL persist for the duration of the session because they are stored in the VM's globals map.
+> **Note:** Variables declared in the REPL persist for the duration of the session because they are stored in the VM's `globals` map.
 
 ---
 
@@ -825,12 +818,16 @@ It is suitable for:
 - Interview discussions
 - Teaching language internals
 
-### Sample Resume Description
+---
+
+## 📄 Sample Resume Description
 
 > **Custom Programming Language and Virtual Machine (C++17)**
 > Designed and implemented a complete stack-based programming language from scratch in C++17, featuring lexical analysis, recursive descent parsing, AST generation, bytecode compilation, and a custom virtual machine with REPL, disassembler, and execution tracing.
 
-### Performance Characteristics
+---
+
+## Performance Characteristics
 
 | Stage | Time Complexity |
 |-------|----------------|
@@ -839,17 +836,21 @@ It is suitable for:
 | Compilation | O(n) |
 | Execution | O(number of bytecode instructions) |
 
-*Where n is the length of the source code.*
+*Where `n` is the length of the source code.*
 
-### Why This Project Stands Out
+---
 
-Unlike small toy interpreters, CVM++ includes the complete language toolchain:
+## Why This Project Stands Out
 
-- **Frontend** — Lexer + Parser
-- **Intermediate Representation** — AST
-- **Backend** — Compiler
-- **Runtime** — VM
-- **Developer Tooling** — REPL, AST Printer, Disassembler, Trace Mode
+Unlike small toy interpreters, CVM++ includes the **complete language toolchain**:
+
+| Layer | Component |
+|-------|-----------|
+| Frontend | Lexer + Parser |
+| Intermediate Representation | AST |
+| Backend | Compiler |
+| Runtime | VM |
+| Developer Tooling | REPL, AST Printer, Disassembler, Trace Mode |
 
 This demonstrates strong understanding of:
 - Low-level programming
